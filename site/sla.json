@@ -1,0 +1,5 @@
+{
+  "_comment": "Parámetros del SLA que calcula scripts/check.mjs. target_pct en null hasta que se defina el objetivo comprometido. services: ids de services.json que entran en el SLA (omitir = todos).",
+  "target_pct": null,
+  "degraded_counts_as_down": false
+}
