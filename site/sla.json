@@ -1,5 +1,5 @@
 {
-  "_comment": "Parámetros del SLA que calcula scripts/check.mjs. target_pct en null hasta que se defina el objetivo comprometido. services: ids de services.json que entran en el SLA (omitir = todos).",
-  "target_pct": null,
+  "_comment": "Parámetros del SLA que calcula scripts/check.mjs. target_pct: objetivo comprometido, por mes calendario UTC. degraded_counts_as_down: false = degradado cuenta como disponible. services: ids de services.json que entran en el SLA (omitir = todos).",
+  "target_pct": 99,
   "degraded_counts_as_down": false
 }
