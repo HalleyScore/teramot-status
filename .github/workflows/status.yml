@@ -1,6 +1,6 @@
 name: Status page
 
-# Every 5 minutes: probe every service in site/services.json and deploy site/
+# Probe every service in site/services.json and deploy site/
 # plus the fresh data to GitHub Pages (status.teramot.com).
 #
 # Check history lives on the `status-data` branch, force-pushed as a single
@@ -28,7 +28,7 @@ concurrency:
 jobs:
   check-and-deploy:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 15
     environment:
       name: github-pages
       url: ${{ steps.deploy.outputs.page_url }}
@@ -60,8 +60,19 @@ jobs:
         with:
           node-version: 22
 
-      - name: Probe services
-        run: node scripts/check.mjs site/data
+      # GitHub fires this cron every 13-18 min in practice, not every 5, and a
+      # check only covers the 15 min after it. So each run keeps checking once
+      # a minute for ~10 min; the concurrency group queues the next run behind
+      # this one, which makes coverage close to continuous. The page itself is
+      # redeployed once per run.
+      - name: Probe services (every minute for ~10 min)
+        run: |
+          end=$((SECONDS + 540))
+          while :; do
+            node scripts/check.mjs site/data
+            [ "$SECONDS" -ge "$end" ] && break
+            sleep 60
+          done
 
       - name: Save history to status-data branch
         run: |

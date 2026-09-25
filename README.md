@@ -3,8 +3,8 @@
 Status page for Teramot's services: **https://status.teramot.com**
 
 Plain HTML and JS, no build step. [`.github/workflows/status.yml`](./.github/workflows/status.yml)
-runs every 5 minutes: `scripts/check.mjs` probes every service in
-`site/services.json`, stores the results on the `status-data` branch and
+probes every service in `site/services.json` once a minute (each run loops
+for ~10 minutes; the next one queues behind it), stores the results on the `status-data` branch and
 deploys `site/` to GitHub Pages. The page is also the record the monthly SLA
 is measured against.
 
@@ -78,7 +78,10 @@ cd site && python3 -m http.server 8000
 
 ## Notes
 
-- GitHub's cron is not exact: runs can be 5–15 minutes late or skipped, which
-  shows up as lost coverage.
+- GitHub's `*/5` cron actually fires every 13–18 minutes, which is why each
+  run loops instead of checking once. Any gap still left shows up as lost
+  coverage, never as uptime.
+- Only Teramot platform services belong here. Custom apps built for a single
+  client (e.g. the PSAL quoting app on server.teramot.com) are out of scope.
 - On public repos GitHub disables scheduled workflows after 60 days without
   repository activity. If that happens, re-enable it from the Actions tab.
