@@ -1,71 +1,84 @@
 # teramot-status
 
-Página de estado de los servicios de Teramot: **https://status.teramot.com**
+Status page for Teramot's services: **https://status.teramot.com**
 
-HTML y JS plano, sin build. [`.github/workflows/status.yml`](./.github/workflows/status.yml)
-corre cada 5 minutos: `scripts/check.mjs` consulta cada servicio de
-`site/services.json`, guarda 90 días de historial en la rama `status-data` y
-despliega `site/` a GitHub Pages.
+Plain HTML and JS, no build step. [`.github/workflows/status.yml`](./.github/workflows/status.yml)
+runs every 5 minutes: `scripts/check.mjs` probes every service in
+`site/services.json`, stores the results on the `status-data` branch and
+deploys `site/` to GitHub Pages. The page is also the record the monthly SLA
+is measured against.
 
 ```
 site/
-  index.html         la página
-  services.json      servicios monitoreados
-  sla.json           parámetros del SLA (objetivo, qué cuenta como caída)
-  maintenance.json   ventanas de mantenimiento (excluidas del SLA)
-  incidents.json     incidentes (a mano)
-  data/              generado por scripts/check.mjs (gitignored; vive en la rama status-data)
-    checks/AAAA-MM.ndjson   cada chequeo, una línea: {t, id, s, ms, code, err?}
-    sla.json                uptime mensual por servicio
-    detected-incidents.json caídas detectadas de los chequeos
+  index.html         the page
+  services.json      monitored services
+  sla.json           SLA parameters (target, what counts as down)
+  maintenance.json   maintenance windows (excluded from the SLA)
+  incidents.json     incidents, written by hand
+  data/              written by scripts/check.mjs (gitignored; lives on the status-data branch)
+    checks/YYYY-MM.ndjson   every check, one line each: {t, id, s, ms, code, err?}
+    history.json            per-day check counts, last 90 days (the bars)
+    sla.json                monthly uptime per service
+    detected-incidents.json outages detected from the checks
+    status.json             latest result per service
 scripts/
-  check.mjs          chequeo de servicios + escritura de datos
-  sla.mjs            cálculo del SLA (funciones puras)
+  check.mjs          probes the services and writes data/
+  sla.mjs            SLA math (pure functions)
   sla.test.mjs       tests: node --test scripts/sla.test.mjs
 ```
 
-## Cómo se mide el SLA
+## How the SLA is measured
 
-- Cada chequeo representa el estado del servicio desde su hora hasta el
-  siguiente chequeo, con un tope de 15 minutos. Pasado ese tope el tiempo
-  queda **sin cobertura** (no se sabe qué pasó) y no cuenta ni como arriba ni
-  como caído.
-- **Downtime** = del primer chequeo fallido al primero sano.
-- **Uptime del mes** = `1 − downtime / tiempo cubierto`, por mes calendario UTC.
-- **Cobertura** = tiempo cubierto / tiempo transcurrido del mes. Hay que
-  leerla junto al uptime: 100% con 40% de cobertura no dice mucho.
-- Los mantenimientos de `maintenance.json` se restan de todo.
-- *Degradado* cuenta como disponible salvo `degraded_counts_as_down: true`.
-- El mes actual y el anterior se recalculan en cada corrida; los anteriores
-  quedan fijos en `data/sla.json`. Los chequeos crudos no se borran nunca.
-- Si el workflow no puede leer `status-data`, falla en vez de empezar de
-  cero: un historial vacío pisaría el registro del SLA.
+- A check stands for the service's state from its own time until the next
+  check, capped at 15 minutes. Past the cap the time is **uncovered** (the
+  monitor didn't run, so nobody knows) and counts as neither up nor down.
+- **Downtime** runs from the first failed check to the first healthy one.
+- **Monthly uptime** = `1 − downtime / covered time`, per UTC calendar month.
+- **Coverage** = covered time / elapsed time in the month. Read it next to the
+  uptime: 100% at 40% coverage says little.
+- Windows in `maintenance.json` are subtracted from everything.
+- *Degraded* (slower than 3s) counts as available unless
+  `degraded_counts_as_down: true` in `site/sla.json`.
+- The current and previous months are recomputed on every run; older months
+  stay as last computed in `data/sla.json`. Raw checks are never deleted.
+- If the workflow can't read `status-data` it fails instead of starting over:
+  an empty history would overwrite the SLA record.
 
-## Tareas comunes
+## Common tasks
 
-- **Agregar/quitar un servicio:** editar `site/services.json`. Por defecto se
-  exige HTTP 2xx; con `"expect": { "json": { "data.status": "ok" } }` además se
-  valida el body (ruta con puntos). Si responde 2xx pero el body no coincide,
-  queda *degradado*; más de 3s de latencia también cuenta como degradado.
-- **Programar un mantenimiento:** agregar a `site/maintenance.json`
+- **Add or remove a service:** edit `site/services.json`. HTTP 2xx is always
+  required. On top of that:
+  - `"expect": { "json": { "data.status": "ok" } }` requires a field of a JSON
+    body (dot path) to equal a value;
+  - `"expect": { "contains": ["<div id=\"root\""] }` requires each string to
+    appear in the body.
+
+  A failed expectation counts as **down**: the service answered, but it isn't
+  healthy (or isn't the service at all).
+- **Schedule maintenance:** add to `site/maintenance.json`
   `{ "services": ["docs"] | "all", "start": ISO, "end": ISO, "title", "body" }`.
-  Se muestra en la página mientras no termine y se excluye del SLA.
-- **Publicar un incidente:** agregar a `site/incidents.json`:
+  It shows on the page until it ends and is excluded from the SLA. Announce it
+  before it starts: a window added after the fact rewrites the current and
+  previous months.
+- **Post an incident:** add to `site/incidents.json` (the text is shown to
+  users, so write it in Spanish):
   ```json
   { "title": "Demoras en consultas", "date": "2026-09-25T14:00:00-03:00",
     "body": "Estamos investigando…", "resolved": false }
   ```
-  El push a `main` despliega enseguida.
+  A push to `main` deploys right away.
 
 ## Local
 
 ```sh
-node scripts/check.mjs            # escribe site/data/
+node scripts/check.mjs            # writes site/data/
+node --test scripts/sla.test.mjs
 cd site && python3 -m http.server 8000
 ```
 
-## Notas
+## Notes
 
-- El cron de GitHub no es exacto; puede atrasarse 5–15 minutos.
-- En repos públicos GitHub desactiva los workflows programados tras 60 días
-  sin actividad en el repo. Si pasa, reactivar desde la pestaña Actions.
+- GitHub's cron is not exact: runs can be 5–15 minutes late or skipped, which
+  shows up as lost coverage.
+- On public repos GitHub disables scheduled workflows after 60 days without
+  repository activity. If that happens, re-enable it from the Actions tab.
