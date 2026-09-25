@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#FAFAF7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0B0F14" media="(prefers-color-scheme: dark)">
+<title>Estado de Teramot</title>
+<meta name="description" content="Estado en tiempo real de los servicios de Teramot: aplicación, API, MCP, autenticación y documentación.">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --brand-deep: #253DE5;
+    --ground: #FAFAF7;
+    --surface: #ffffff;
+    --ink: #0B0F14;
+    --muted: #4b5563;
+    --faint: #9ca3af;
+    --rule: rgba(11, 15, 20, 0.08);
+    --up: #12A150;
+    --degraded: #D98E04;
+    --down: #D92D20;
+    --nodata: #E5E7EB;
+    --banner-up: var(--up);
+    --banner-degraded: var(--degraded);
+    --banner-down: var(--down);
+    --link: var(--brand-deep);
+    --radius: 12px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ground: #0B0F14;
+      --surface: #131821;
+      --ink: #F3F4F6;
+      --muted: #9ca3af;
+      --faint: #6b7280;
+      --rule: rgba(255, 255, 255, 0.08);
+      --up: #2BC46D;
+      --degraded: #F0A92E;
+      --down: #F04438;
+      --nodata: #262C38;
+      --banner-up: #15803D;
+      --banner-degraded: #B45309;
+      --banner-down: #B91C1C;
+      --link: #8C9BFF;
+    }
+    .logo { filter: invert(1) hue-rotate(180deg) brightness(1.4); }
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Inter", system-ui, sans-serif;
+    background: var(--ground);
+    color: var(--ink);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1, h2 { font-family: "Manrope", "Inter", sans-serif; letter-spacing: -0.02em; }
+  a { color: var(--link); }
+  .wrap { max-width: 840px; margin: 0 auto; padding: 0 16px; }
+
+  header { padding: 32px 0 24px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+  .logo { height: 20px; width: auto; display: block; }
+  header a.back { font-size: 14px; color: var(--muted); text-decoration: none; }
+  header a.back:hover { color: var(--ink); }
+
+  .banner {
+    display: flex; align-items: center; gap: 14px;
+    padding: 20px 24px; border-radius: var(--radius);
+    color: #fff; background: var(--banner-up);
+    margin-bottom: 32px;
+  }
+  .banner[data-status="degraded"] { background: var(--banner-degraded); }
+  .banner[data-status="down"] { background: var(--banner-down); }
+  .banner[data-status="unknown"] { background: var(--faint); }
+  .banner h1 { font-size: 20px; font-weight: 700; }
+  .banner p { font-size: 13px; opacity: .9; }
+  .banner svg { width: 28px; height: 28px; flex: none; }
+
+  .card { background: var(--surface); border: 1px solid var(--rule); border-radius: var(--radius); }
+  .service { padding: 18px 24px; border-top: 1px solid var(--rule); }
+  .service:first-child { border-top: none; }
+  .service-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+  .service-name { font-weight: 600; font-size: 15px; }
+  .service-desc { font-size: 13px; color: var(--muted); }
+  .service-state { font-size: 13px; font-weight: 600; white-space: nowrap; }
+  .service-state[data-status="up"] { color: var(--up); }
+  .service-state[data-status="degraded"] { color: var(--degraded); }
+  .service-state[data-status="down"] { color: var(--down); }
+  .service-state[data-status="unknown"] { color: var(--faint); }
+
+  .bars { display: flex; gap: 2px; height: 32px; }
+  .bar { flex: 1; border-radius: 2px; background: var(--nodata); min-width: 2px; }
+  .bar[data-status="up"] { background: var(--up); }
+  .bar[data-status="degraded"] { background: var(--degraded); }
+  .bar[data-status="down"] { background: var(--down); }
+  .bar:hover { opacity: .7; }
+  .bars-legend { display: flex; justify-content: space-between; font-size: 12px; color: var(--faint); margin-top: 6px; }
+
+  section { margin-top: 40px; }
+  section h2 { font-size: 18px; font-weight: 700; margin-bottom: 14px; }
+  .incident { padding: 18px 24px; border-top: 1px solid var(--rule); }
+  .incident:first-child { border-top: none; }
+  .incident h3 { font-size: 15px; font-weight: 600; }
+  .incident time { font-size: 12px; color: var(--faint); }
+  .incident p { font-size: 14px; color: var(--muted); margin-top: 6px; }
+  .empty { padding: 18px 24px; font-size: 14px; color: var(--muted); }
+
+  footer { margin: 48px 0 40px; font-size: 13px; color: var(--faint); display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+
+  #tooltip {
+    position: fixed; pointer-events: none; z-index: 10;
+    background: var(--ink); color: var(--ground);
+    font-size: 12px; padding: 6px 10px; border-radius: 6px;
+    white-space: nowrap; display: none;
+  }
+
+  @media (max-width: 600px) {
+    .service, .incident, .empty { padding: 16px; }
+    .banner { padding: 16px; }
+    .bar:nth-child(-n+60) { display: none; } /* last 30 days on phones */
+    .bars-legend .full { display: none; }
+  }
+  @media (min-width: 601px) { .bars-legend .short { display: none; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <a href="https://teramot.com/"><img class="logo" src="logo.svg" alt="Teramot"></a>
+    <a class="back" href="https://app.teramot.com/">Ir a la app →</a>
+  </header>
+
+  <main>
+    <div class="banner" id="banner" data-status="unknown">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path id="banner-icon" d="M12 8v4m0 4h.01"/></svg>
+      <div>
+        <h1 id="banner-title">Cargando estado…</h1>
+        <p id="banner-sub"></p>
+      </div>
+    </div>
+
+    <div class="card" id="services"></div>
+
+    <section>
+      <h2>Incidentes recientes</h2>
+      <div class="card" id="incidents"><p class="empty">Cargando…</p></div>
+    </section>
+  </main>
+
+  <footer>
+    <span>Se verifica cada 5 minutos.</span>
+    <span>¿Problemas? Escribinos a <a href="mailto:soporte@teramot.com">soporte@teramot.com</a></span>
+  </footer>
+</div>
+<div id="tooltip" role="tooltip"></div>
+
+<script>
+  const DAYS = 90;
+  const LABEL = { up: 'Operativo', degraded: 'Degradado', down: 'Caído', unknown: 'Sin datos' };
+  const BANNER = {
+    up: ['Todos los sistemas operativos', 'M8 12l3 3 5-6'],
+    degraded: ['Algunos servicios con rendimiento degradado', 'M12 8v4m0 4h.01'],
+    down: ['Interrupción en uno o más servicios', 'M15 9l-6 6m0-6l6 6'],
+    unknown: ['No pudimos obtener el estado', 'M12 8v4m0 4h.01'],
+  };
+
+  const $ = (id) => document.getElementById(id);
+  const fmtTime = (iso) => new Date(iso).toLocaleString('es-AR', { dateStyle: 'medium', timeStyle: 'short' });
+  const fmtDay = (d) => new Date(d + 'T12:00:00Z').toLocaleDateString('es-AR', { day: 'numeric', month: 'short', year: 'numeric' });
+  const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+  async function getJson(url) {
+    const res = await fetch(url + '?t=' + Date.now(), { cache: 'no-store' });
+    if (!res.ok) throw new Error(url + ': HTTP ' + res.status);
+    return res.json();
+  }
+
+  function lastDays(n) {
+    const out = [];
+    const now = new Date();
+    for (let i = n - 1; i >= 0; i--) out.push(new Date(now.getTime() - i * 86400000).toISOString().slice(0, 10));
+    return out;
+  }
+
+  function dayStatus(c) {
+    if (!c) return 'unknown';
+    const total = c.up + c.degraded + c.down;
+    if (!total) return 'unknown';
+    if (c.down / total > 0.02) return 'down';
+    if (c.down || c.degraded) return 'degraded';
+    return 'up';
+  }
+
+  function uptime(perDay, days) {
+    let ok = 0, total = 0;
+    for (const d of days) {
+      const c = perDay[d];
+      if (!c) continue;
+      ok += c.up + c.degraded;
+      total += c.up + c.degraded + c.down;
+    }
+    return total ? (100 * ok / total).toFixed(2).replace(/\.?0+$/, '') + '%' : '—';
+  }
+
+  function render(services, status, history) {
+    const days = lastDays(DAYS);
+    const latest = Object.fromEntries((status?.services || []).map((s) => [s.id, s]));
+    const overall = status?.overall || 'unknown';
+
+    $('banner').dataset.status = overall;
+    $('banner-title').textContent = BANNER[overall][0];
+    $('banner-icon').setAttribute('d', BANNER[overall][1]);
+    $('banner-sub').textContent = status ? 'Última verificación: ' + fmtTime(status.checked_at) : '';
+
+    $('services').innerHTML = services.map((svc) => {
+      const now = latest[svc.id]?.status || 'unknown';
+      const perDay = history?.days?.[svc.id] || {};
+      const bars = days.map((d) => {
+        const c = perDay[d];
+        const st = dayStatus(c);
+        const tip = fmtDay(d) + ' · ' + (c ? LABEL[st] + (c.down ? ` (${c.down} fallas)` : '') : 'Sin datos');
+        return `<div class="bar" data-status="${st}" data-tip="${esc(tip)}"></div>`;
+      }).join('');
+      return `
+        <div class="service">
+          <div class="service-head">
+            <div>
+              <div class="service-name">${esc(svc.name)}</div>
+              <div class="service-desc">${esc(svc.description || '')}</div>
+            </div>
+            <div class="service-state" data-status="${now}">${LABEL[now]}</div>
+          </div>
+          <div class="bars">${bars}</div>
+          <div class="bars-legend">
+            <span><span class="full">Hace ${DAYS} días</span><span class="short">Hace 30 días</span></span>
+            <span><span class="full">${uptime(perDay, days)}</span><span class="short">${uptime(perDay, days.slice(-30))}</span> disponibilidad</span>
+            <span>Hoy</span>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  function renderIncidents(list) {
+    const recent = (list || []).slice().sort((a, b) => b.date.localeCompare(a.date)).slice(0, 10);
+    $('incidents').innerHTML = recent.length
+      ? recent.map((i) => `
+          <div class="incident">
+            <h3>${esc(i.title)}</h3>
+            <time datetime="${esc(i.date)}">${fmtTime(i.date)}${i.resolved ? ' · Resuelto' : ' · En curso'}</time>
+            <p>${esc(i.body)}</p>
+          </div>`).join('')
+      : '<p class="empty">Sin incidentes reportados en los últimos días.</p>';
+  }
+
+  async function load() {
+    const [services, status, history, incidents] = await Promise.all([
+      getJson('services.json').then((j) => j.services),
+      getJson('data/status.json').catch(() => null),
+      getJson('data/history.json').catch(() => null),
+      getJson('incidents.json').catch(() => []),
+    ]);
+    render(services, status, history);
+    renderIncidents(incidents);
+  }
+
+  const tip = $('tooltip');
+  document.addEventListener('mouseover', (e) => {
+    const t = e.target.closest('[data-tip]');
+    if (!t) { tip.style.display = 'none'; return; }
+    tip.textContent = t.dataset.tip;
+    tip.style.display = 'block';
+  });
+  document.addEventListener('mousemove', (e) => {
+    if (tip.style.display === 'none') return;
+    const x = Math.min(e.clientX + 12, window.innerWidth - tip.offsetWidth - 8);
+    tip.style.left = x + 'px';
+    tip.style.top = (e.clientY + 16) + 'px';
+  });
+
+  load().catch((err) => { console.error(err); render([], null, null); });
+  setInterval(() => load().catch(console.error), 60_000);
+</script>
+</body>
+</html>

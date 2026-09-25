@@ -1,0 +1,54 @@
+{
+  "_comment": "Services monitored by scripts/check.mjs. `expect.json` checks a field in a JSON body (dot path). Only aleph exposes a real health payload today; the rest are reachability checks until they grow one.",
+  "services": [
+    {
+      "id": "app",
+      "name": "Aplicación web",
+      "description": "app.teramot.com",
+      "url": "https://app.teramot.com/"
+    },
+    {
+      "id": "api",
+      "name": "API",
+      "description": "Servicio de datos y consultas",
+      "url": "https://aleph.teramot.com/health",
+      "expect": { "json": { "data.status": "ok", "data.database": "ok" } }
+    },
+    {
+      "id": "server",
+      "name": "Servidor de aplicación",
+      "description": "server.teramot.com",
+      "url": "https://server.teramot.com/health"
+    },
+    {
+      "id": "mcp",
+      "name": "MCP",
+      "description": "Conector para Claude, ChatGPT y otros agentes",
+      "url": "https://mcp.teramot.com/health"
+    },
+    {
+      "id": "auth",
+      "name": "Autenticación",
+      "description": "Inicio de sesión y cuentas",
+      "url": "https://auth.teramot.com/health"
+    },
+    {
+      "id": "docs",
+      "name": "Documentación",
+      "description": "docs.teramot.com",
+      "url": "https://docs.teramot.com/"
+    },
+    {
+      "id": "engineering",
+      "name": "Blog de ingeniería",
+      "description": "engineering.teramot.com",
+      "url": "https://engineering.teramot.com/"
+    },
+    {
+      "id": "web",
+      "name": "Sitio web",
+      "description": "teramot.com",
+      "url": "https://teramot.com/"
+    }
+  ]
+}
