@@ -110,6 +110,21 @@
   .bars-legend { display: flex; justify-content: space-between; font-size: 12px; color: var(--faint); margin-top: 6px; }
 
   section { margin-top: 40px; }
+  .section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+  .section-head h2 { margin-bottom: 0; }
+  .section-head .target { font-size: 13px; color: var(--muted); }
+  .sla { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+  .sla th, .sla td { padding: 12px 24px; text-align: right; border-top: 1px solid var(--rule); }
+  .sla th:first-child, .sla td:first-child { text-align: left; }
+  .sla thead th { border-top: none; font-size: 12px; font-weight: 500; color: var(--muted); }
+  .sla td:first-child { font-size: 14px; font-weight: 600; }
+  .sla .pct { font-size: 15px; font-weight: 600; }
+  .sla .pct[data-miss] { color: var(--down); }
+  .sla .meta { font-size: 12px; color: var(--faint); white-space: nowrap; }
+  .note { font-size: 12px; color: var(--faint); margin-top: 10px; line-height: 1.6; }
+  .tag { display: inline-block; font-size: 11px; font-weight: 600; padding: 1px 8px; border-radius: 999px; margin-left: 8px; vertical-align: 2px; background: var(--nodata); color: var(--muted); }
+  .tag[data-kind="down"] { background: color-mix(in oklab, var(--down) 16%, transparent); color: var(--down); }
+  .tag[data-kind="maintenance"] { background: color-mix(in oklab, var(--link) 16%, transparent); color: var(--link); }
   section h2 { font-size: 18px; font-weight: 700; margin-bottom: 14px; }
   .incident { padding: 18px 24px; border-top: 1px solid var(--rule); }
   .incident:first-child { border-top: none; }
@@ -129,6 +144,10 @@
 
   @media (max-width: 600px) {
     .service, .incident, .empty { padding: 16px; }
+    .sla th, .sla td { padding: 10px 16px; }
+    .sla .old { display: none; }
+    .sla .meta { white-space: normal; }
+    .sla td:first-child { font-size: 13px; }
     .banner { padding: 16px; }
     .bar:nth-child(-n+60) { display: none; } /* last 30 days on phones */
     .bars-legend .full, .service-uptime .full { display: none; }
@@ -162,6 +181,19 @@
     <div class="card" id="services"></div>
 
     <section>
+      <div class="section-head">
+        <h2>SLA mensual</h2>
+        <span class="target" id="sla-target"></span>
+      </div>
+      <div class="card" style="overflow-x:auto"><table class="sla" id="sla"></table></div>
+      <p class="note">
+        Uptime = tiempo sin caídas ÷ tiempo monitoreado, por mes calendario (UTC). Una caída va del primer chequeo fallido al primero sano.
+        Cobertura (cob.) = parte del mes con monitoreo activo. Se excluyen los mantenimientos programados.
+        <a id="raw-link" href="data/checks/">Datos crudos de cada chequeo</a>.
+      </p>
+    </section>
+
+    <section>
       <h2>Incidentes recientes</h2>
       <div class="card" id="incidents"><p class="empty">Cargando…</p></div>
     </section>
@@ -188,6 +220,15 @@
   const fmtTime = (iso) => new Date(iso).toLocaleString('es-AR', { dateStyle: 'medium', timeStyle: 'short' });
   const fmtDay = (d) => new Date(d + 'T12:00:00Z').toLocaleDateString('es-AR', { day: 'numeric', month: 'short', year: 'numeric' });
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+  const fmtMonth = (key) => new Date(key + '-15T12:00:00Z').toLocaleDateString('es-AR', { month: 'short', year: 'numeric' });
+  const fmtPct = (n) => n == null ? '—' : n.toFixed(3).replace(/\.?0+$/, '') + '%';
+  function fmtMin(min) {
+    if (min < 1) return Math.round(min * 60) + ' s';
+    if (min < 60) return Math.round(min) + ' min';
+    const h = Math.floor(min / 60), m = Math.round(min % 60);
+    return h + ' h' + (m ? ' ' + m + ' min' : '');
+  }
 
   async function getJson(url) {
     const res = await fetch(url + '?t=' + Date.now(), { cache: 'no-store' });
@@ -275,27 +316,83 @@
     }).join('');
   }
 
-  function renderIncidents(list) {
-    const recent = (list || []).slice().sort((a, b) => b.date.localeCompare(a.date)).slice(0, 10);
-    $('incidents').innerHTML = recent.length
-      ? recent.map((i) => `
+  function renderSla(services, sla) {
+    const target = sla?.target_pct ?? null;
+    $('sla-target').textContent = target != null ? 'Objetivo: ' + fmtPct(target) : '';
+    const months = Object.keys(sla?.months || {}).sort().reverse().slice(0, 3);
+    if (!months.length) {
+      $('sla').innerHTML = '<tbody><tr><td class="empty">Todavía no hay datos de SLA.</td></tr></tbody>';
+      return;
+    }
+    $('raw-link').href = 'data/checks/' + months[0] + '.ndjson';
+    const col = (i) => i === 2 ? ' class="old"' : '';
+    const head = months.map((m, i) => `<th${col(i)}>${esc(fmtMonth(m))}${sla.months[m].final ? '' : ' · en curso'}</th>`).join('');
+    const rows = services
+      .filter((svc) => months.some((m) => sla.months[m].services[svc.id]))
+      .map((svc) => `
+        <tr>
+          <td>${esc(svc.name)}</td>
+          ${months.map((m, i) => {
+            const r = sla.months[m].services[svc.id];
+            if (!r) return `<td${col(i)}><span class="meta">—</span></td>`;
+            const miss = target != null && r.uptime_pct != null && r.uptime_pct < target;
+            return `<td${col(i)}>
+              <div class="pct"${miss ? ' data-miss' : ''}>${fmtPct(r.uptime_pct)}</div>
+              <div class="meta">${r.downtime_min ? fmtMin(r.downtime_min) + ' caído · ' : ''}cob. ${fmtPct(r.coverage_pct)}</div>
+            </td>`;
+          }).join('')}
+        </tr>`).join('');
+    $('sla').innerHTML = `<thead><tr><th>Servicio</th>${head}</tr></thead><tbody>${rows}</tbody>`;
+  }
+
+  // Three sources, one list: incidents written by hand, outages detected from
+  // the checks, and scheduled maintenance that is upcoming or under way.
+  function renderIncidents(services, manual, detected, maintenance) {
+    const name = Object.fromEntries(services.map((s) => [s.id, s.name]));
+    const now = Date.now();
+    const items = [
+      ...(manual || []).map((i) => ({ date: i.date, title: i.title, body: i.body, state: i.resolved ? 'Resuelto' : 'En curso' })),
+      ...(detected?.incidents || []).map((i) => ({
+        date: i.start,
+        title: (name[i.id] || i.id) + ': caída detectada',
+        body: i.end
+          ? `Duración ${fmtMin(i.duration_min)} · hasta ${fmtTime(i.end)}`
+          : `Sin respuesta desde hace ${fmtMin(i.duration_min)}`,
+        state: i.end ? 'Resuelto' : 'En curso',
+        tag: ['down', 'Automático'],
+      })),
+      ...(maintenance || []).filter((w) => Date.parse(w.end) > now).map((w) => ({
+        date: w.start,
+        title: w.title || 'Mantenimiento programado',
+        body: (w.body ? w.body + ' ' : '') + `Hasta ${fmtTime(w.end)}`,
+        state: Date.parse(w.start) > now ? 'Programado' : 'En curso',
+        tag: ['maintenance', 'Mantenimiento'],
+      })),
+    ].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 15);
+
+    $('incidents').innerHTML = items.length
+      ? items.map((i) => `
           <div class="incident">
-            <h3>${esc(i.title)}</h3>
-            <time datetime="${esc(i.date)}">${fmtTime(i.date)}${i.resolved ? ' · Resuelto' : ' · En curso'}</time>
+            <h3>${esc(i.title)}${i.tag ? `<span class="tag" data-kind="${i.tag[0]}">${i.tag[1]}</span>` : ''}</h3>
+            <time datetime="${esc(i.date)}">${fmtTime(i.date)} · ${i.state}</time>
             <p>${esc(i.body)}</p>
           </div>`).join('')
-      : '<p class="empty">Sin incidentes reportados en los últimos días.</p>';
+      : '<p class="empty">Sin incidentes en los últimos días.</p>';
   }
 
   async function load() {
-    const [services, status, history, incidents] = await Promise.all([
+    const [services, status, history, sla, detected, incidents, maintenance] = await Promise.all([
       getJson('services.json').then((j) => j.services),
       getJson('data/status.json').catch(() => null),
       getJson('data/history.json').catch(() => null),
+      getJson('data/sla.json').catch(() => null),
+      getJson('data/detected-incidents.json').catch(() => null),
       getJson('incidents.json').catch(() => []),
+      getJson('maintenance.json').catch(() => []),
     ]);
     render(services, status, history);
-    renderIncidents(incidents);
+    renderSla(services, sla);
+    renderIncidents(services, incidents, detected, maintenance);
   }
 
   const tip = $('tooltip');

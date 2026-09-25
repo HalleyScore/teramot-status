@@ -1,0 +1,19 @@
+name: Tests
+
+# Kept out of status.yml on purpose: a failing test must never stop the
+# checks from running, or the SLA record gets a hole.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node --test scripts/sla.test.mjs

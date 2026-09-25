@@ -35,14 +35,25 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # The SLA history lives only on status-data, and the save step below
+      # force-pushes it. So "couldn't fetch" must fail the run, never fall
+      # through to "start fresh" — that would overwrite the record.
       - name: Fetch previous history
         run: |
           mkdir -p site/data
-          if git fetch --depth=1 origin status-data 2>/dev/null; then
+          set +e
+          git ls-remote --exit-code --heads origin status-data >/dev/null
+          rc=$?
+          set -e
+          if [ "$rc" -eq 2 ]; then
+            echo "No status-data branch yet; starting fresh history."
+          elif [ "$rc" -ne 0 ]; then
+            echo "::error::Could not reach origin to read status-data (exit $rc)"; exit 1
+          else
+            git fetch --depth=1 origin status-data
             git --work-tree=site/data checkout FETCH_HEAD -- .
             git reset -q
-          else
-            echo "No status-data branch yet; starting fresh history."
+            test -s site/data/history.json || { echo "::error::status-data exists but has no history.json"; exit 1; }
           fi
 
       - uses: actions/setup-node@v4
@@ -58,7 +69,7 @@ jobs:
           git init -q -b status-data
           git config user.name "github-actions[bot]"
           git config user.email "41898273+github-actions[bot]@users.noreply.github.com"
-          git add status.json history.json
+          git add -A
           git commit -qm "Status check $(date -u +%FT%TZ)"
           git push -qf "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" status-data
           rm -rf .git
