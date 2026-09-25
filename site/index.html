@@ -86,7 +86,16 @@
   .service-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
   .service-name { font-weight: 600; font-size: 15px; }
   .service-desc { font-size: 13px; color: var(--muted); }
-  .service-state { font-size: 13px; font-weight: 600; white-space: nowrap; }
+  .service-right { text-align: right; white-space: nowrap; }
+  .service-state { font-size: 13px; font-weight: 600; }
+  .service-uptime { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .service-uptime strong { color: var(--ink); font-weight: 600; }
+
+  .uptime-grid { display: grid; grid-template-columns: repeat(4, 1fr); margin-bottom: 24px; }
+  .uptime-tile { padding: 16px 24px; border-left: 1px solid var(--rule); }
+  .uptime-tile:first-child { border-left: none; }
+  .uptime-tile .label { font-size: 12px; color: var(--muted); }
+  .uptime-tile .value { font-family: "Manrope", "Inter", sans-serif; font-size: 24px; font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
   .service-state[data-status="up"] { color: var(--up); }
   .service-state[data-status="degraded"] { color: var(--degraded); }
   .service-state[data-status="down"] { color: var(--down); }
@@ -122,9 +131,14 @@
     .service, .incident, .empty { padding: 16px; }
     .banner { padding: 16px; }
     .bar:nth-child(-n+60) { display: none; } /* last 30 days on phones */
-    .bars-legend .full { display: none; }
+    .bars-legend .full, .service-uptime .full { display: none; }
+    .uptime-grid { grid-template-columns: repeat(2, 1fr); }
+    .uptime-tile { padding: 14px 16px; }
+    .uptime-tile:nth-child(3) { border-left: none; }
+    .uptime-tile:nth-child(n+3) { border-top: 1px solid var(--rule); }
+    .uptime-tile .value { font-size: 20px; }
   }
-  @media (min-width: 601px) { .bars-legend .short { display: none; } }
+  @media (min-width: 601px) { .bars-legend .short, .service-uptime .short { display: none; } }
 </style>
 </head>
 <body>
@@ -142,6 +156,8 @@
         <p id="banner-sub"></p>
       </div>
     </div>
+
+    <div class="card uptime-grid" id="uptime" aria-label="Disponibilidad de todos los servicios"></div>
 
     <div class="card" id="services"></div>
 
@@ -195,13 +211,16 @@
     return 'up';
   }
 
-  function uptime(perDay, days) {
+  // Degraded counts as available: the service answered, just slowly or partly.
+  function uptime(perDays, days) {
     let ok = 0, total = 0;
-    for (const d of days) {
-      const c = perDay[d];
-      if (!c) continue;
-      ok += c.up + c.degraded;
-      total += c.up + c.degraded + c.down;
+    for (const perDay of perDays) {
+      for (const d of days) {
+        const c = perDay[d];
+        if (!c) continue;
+        ok += c.up + c.degraded;
+        total += c.up + c.degraded + c.down;
+      }
     }
     return total ? (100 * ok / total).toFixed(2).replace(/\.?0+$/, '') + '%' : '—';
   }
@@ -215,6 +234,13 @@
     $('banner-title').textContent = BANNER[overall][0];
     $('banner-icon').setAttribute('d', BANNER[overall][1]);
     $('banner-sub').textContent = status ? 'Última verificación: ' + fmtTime(status.checked_at) : '';
+
+    const all = services.map((svc) => history?.days?.[svc.id] || {});
+    $('uptime').innerHTML = [['Hoy', 1], ['7 días', 7], ['30 días', 30], ['90 días', 90]].map(([label, n]) => `
+      <div class="uptime-tile">
+        <div class="label">Uptime · ${label}</div>
+        <div class="value">${uptime(all, days.slice(-n))}</div>
+      </div>`).join('');
 
     $('services').innerHTML = services.map((svc) => {
       const now = latest[svc.id]?.status || 'unknown';
@@ -232,12 +258,17 @@
               <div class="service-name">${esc(svc.name)}</div>
               <div class="service-desc">${esc(svc.description || '')}</div>
             </div>
-            <div class="service-state" data-status="${now}">${LABEL[now]}</div>
+            <div class="service-right">
+              <div class="service-state" data-status="${now}">${LABEL[now]}</div>
+              <div class="service-uptime">
+                <span class="full"><strong>${uptime([perDay], days)}</strong> uptime</span>
+                <span class="short"><strong>${uptime([perDay], days.slice(-30))}</strong> uptime</span>
+              </div>
+            </div>
           </div>
           <div class="bars">${bars}</div>
           <div class="bars-legend">
             <span><span class="full">Hace ${DAYS} días</span><span class="short">Hace 30 días</span></span>
-            <span><span class="full">${uptime(perDay, days)}</span><span class="short">${uptime(perDay, days.slice(-30))}</span> disponibilidad</span>
             <span>Hoy</span>
           </div>
         </div>`;
