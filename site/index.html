@@ -48,7 +48,6 @@
       --banner-down: #B91C1C;
       --link: #8C9BFF;
     }
-    .logo { filter: invert(1) hue-rotate(180deg) brightness(1.4); }
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -131,7 +130,7 @@
 <body>
 <div class="wrap">
   <header>
-    <a href="https://teramot.com/"><img class="logo" src="logo.svg" alt="Teramot"></a>
+    <a href="https://teramot.com/"><picture><source srcset="logo-dark.svg" media="(prefers-color-scheme: dark)"><img class="logo" src="logo.svg" alt="Teramot"></picture></a>
     <a class="back" href="https://app.teramot.com/">Ir a la app →</a>
   </header>
 
