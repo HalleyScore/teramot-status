@@ -66,8 +66,15 @@ async function probe(service) {
       } catch {
         return { status: 'down', code: res.status, latency_ms: latency, error: 'Respuesta no es JSON' };
       }
+      // The service itself says it is not healthy: that is down, not merely slow.
       if (got !== want) {
-        return { status: 'degraded', code: res.status, latency_ms: latency, error: `${key}=${got}` };
+        return { status: 'down', code: res.status, latency_ms: latency, error: `${key}=${got}` };
+      }
+    }
+    // Guards against a 200 that isn't the service (an error page, a parked domain).
+    for (const needle of service.expect?.contains || []) {
+      if (!body.includes(needle)) {
+        return { status: 'down', code: res.status, latency_ms: latency, error: `Falta "${needle}" en la respuesta` };
       }
     }
     return { status: latency > SLOW_MS ? 'degraded' : 'up', code: res.status, latency_ms: latency };
