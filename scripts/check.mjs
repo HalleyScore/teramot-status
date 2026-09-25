@@ -158,7 +158,8 @@ await writeFile(path.join(dataDir, 'sla.json'), JSON.stringify(sla, null, 2) + '
 const detectedFile = path.join(dataDir, 'detected-incidents.json');
 const recentFrom = new Date(monthBounds(prevMonth).start).toISOString();
 const older = (await readJson(detectedFile, { incidents: [] })).incidents.filter((i) => i.start < recentFrom);
-const incidents = [...detectIncidents(recentChecks, opts), ...older];
+const inScopeChecks = recentChecks.filter((c) => inScope.includes(c.id));
+const incidents = [...detectIncidents(inScopeChecks, opts), ...older.filter((i) => inScope.includes(i.id))];
 await writeFile(detectedFile, JSON.stringify({ updated_at: now.toISOString(), incidents }, null, 2) + '\n');
 
 for (const r of results) {

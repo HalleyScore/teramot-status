@@ -26,12 +26,6 @@
       }
     },
     {
-      "id": "server",
-      "name": "Servidor de aplicación",
-      "description": "server.teramot.com",
-      "url": "https://server.teramot.com/health"
-    },
-    {
       "id": "mcp",
       "name": "MCP",
       "description": "Conector para Claude, ChatGPT y otros agentes",
