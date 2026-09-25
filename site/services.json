@@ -1,18 +1,29 @@
 {
-  "_comment": "Services monitored by scripts/check.mjs. `expect.json` checks a field in a JSON body (dot path). Only aleph exposes a real health payload today; the rest are reachability checks until they grow one.",
+  "_comment": "Services monitored by scripts/check.mjs. HTTP 2xx is always required. `expect.json` requires a field in a JSON body (dot path) to equal a value; `expect.contains` requires each string to appear in the body. A failed expectation counts as down.",
   "services": [
     {
       "id": "app",
       "name": "Aplicación web",
       "description": "app.teramot.com",
-      "url": "https://app.teramot.com/"
+      "url": "https://app.teramot.com/",
+      "expect": {
+        "contains": [
+          "<div id=\"root\"",
+          "/assets/index-"
+        ]
+      }
     },
     {
       "id": "api",
       "name": "API",
       "description": "Servicio de datos y consultas",
       "url": "https://aleph.teramot.com/health",
-      "expect": { "json": { "data.status": "ok", "data.database": "ok" } }
+      "expect": {
+        "json": {
+          "data.status": "ok",
+          "data.database": "ok"
+        }
+      }
     },
     {
       "id": "server",
@@ -30,7 +41,7 @@
       "id": "auth",
       "name": "Autenticación",
       "description": "Inicio de sesión y cuentas",
-      "url": "https://auth.teramot.com/health"
+      "url": "https://auth.teramot.com/api/status"
     },
     {
       "id": "docs",
