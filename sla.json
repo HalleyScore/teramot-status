@@ -1,0 +1,74 @@
+{
+  "months": {
+    "2026-09": {
+      "final": false,
+      "services": {
+        "app": {
+          "uptime_pct": 100,
+          "downtime_min": 0,
+          "covered_min": 1758.3,
+          "elapsed_min": 37368.8,
+          "coverage_pct": 4.7,
+          "checks": 1585,
+          "down_checks": 0
+        },
+        "api": {
+          "uptime_pct": 100,
+          "downtime_min": 0,
+          "covered_min": 1758.3,
+          "elapsed_min": 37368.8,
+          "coverage_pct": 4.7,
+          "checks": 1585,
+          "down_checks": 0
+        },
+        "mcp": {
+          "uptime_pct": 100,
+          "downtime_min": 0,
+          "covered_min": 1758.3,
+          "elapsed_min": 37368.8,
+          "coverage_pct": 4.7,
+          "checks": 1585,
+          "down_checks": 0
+        },
+        "auth": {
+          "uptime_pct": 100,
+          "downtime_min": 0,
+          "covered_min": 1758.3,
+          "elapsed_min": 37368.8,
+          "coverage_pct": 4.7,
+          "checks": 1585,
+          "down_checks": 0
+        },
+        "docs": {
+          "uptime_pct": 100,
+          "downtime_min": 0,
+          "covered_min": 1758.3,
+          "elapsed_min": 37368.8,
+          "coverage_pct": 4.7,
+          "checks": 1585,
+          "down_checks": 0
+        },
+        "engineering": {
+          "uptime_pct": 100,
+          "downtime_min": 0,
+          "covered_min": 1758.3,
+          "elapsed_min": 37368.8,
+          "coverage_pct": 4.7,
+          "checks": 1585,
+          "down_checks": 0
+        },
+        "web": {
+          "uptime_pct": 100,
+          "downtime_min": 0,
+          "covered_min": 1758.3,
+          "elapsed_min": 37368.8,
+          "coverage_pct": 4.7,
+          "checks": 1585,
+          "down_checks": 0
+        }
+      }
+    }
+  },
+  "target_pct": 99,
+  "updated_at": "2026-09-26T22:48:45.155Z"
+}
