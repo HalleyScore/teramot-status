@@ -1,0 +1,42 @@
+{
+  "checked_at": "2026-10-17T23:56:11.356Z",
+  "overall": "up",
+  "services": [
+    {
+      "id": "app",
+      "status": "up",
+      "code": 200,
+      "latency_ms": 314
+    },
+    {
+      "id": "api",
+      "status": "up",
+      "code": 200,
+      "latency_ms": 133
+    },
+    {
+      "id": "mcp",
+      "status": "up",
+      "code": 200,
+      "latency_ms": 173
+    },
+    {
+      "id": "auth",
+      "status": "up",
+      "code": 204,
+      "latency_ms": 513
+    },
+    {
+      "id": "docs",
+      "status": "up",
+      "code": 200,
+      "latency_ms": 137
+    },
+    {
+      "id": "web",
+      "status": "up",
+      "code": 200,
+      "latency_ms": 223
+    }
+  ]
+}
