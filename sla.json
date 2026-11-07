@@ -1,0 +1,183 @@
+{
+  "months": {
+    "2026-09": {
+      "final": true,
+      "services": {
+        "app": {
+          "uptime_pct": 100,
+          "downtime_min": 0,
+          "covered_min": 7301.4,
+          "elapsed_min": 43200,
+          "coverage_pct": 16.9,
+          "checks": 5702,
+          "down_checks": 0
+        },
+        "api": {
+          "uptime_pct": 100,
+          "downtime_min": 0,
+          "covered_min": 7301.4,
+          "elapsed_min": 43200,
+          "coverage_pct": 16.9,
+          "checks": 5702,
+          "down_checks": 0
+        },
+        "mcp": {
+          "uptime_pct": 100,
+          "downtime_min": 0,
+          "covered_min": 7301.4,
+          "elapsed_min": 43200,
+          "coverage_pct": 16.9,
+          "checks": 5702,
+          "down_checks": 0
+        },
+        "auth": {
+          "uptime_pct": 99.986,
+          "downtime_min": 1,
+          "covered_min": 7301.4,
+          "elapsed_min": 43200,
+          "coverage_pct": 16.9,
+          "checks": 5702,
+          "down_checks": 1
+        },
+        "docs": {
+          "uptime_pct": 99.361,
+          "downtime_min": 46.7,
+          "covered_min": 7301.4,
+          "elapsed_min": 43200,
+          "coverage_pct": 16.9,
+          "checks": 5702,
+          "down_checks": 31
+        },
+        "web": {
+          "uptime_pct": 100,
+          "downtime_min": 0,
+          "covered_min": 7301.4,
+          "elapsed_min": 43200,
+          "coverage_pct": 16.9,
+          "checks": 5702,
+          "down_checks": 0
+        }
+      }
+    },
+    "2026-10": {
+      "final": true,
+      "services": {
+        "app": {
+          "uptime_pct": 99.997,
+          "downtime_min": 1,
+          "covered_min": 33510,
+          "elapsed_min": 44640,
+          "coverage_pct": 75.1,
+          "checks": 20593,
+          "down_checks": 1
+        },
+        "api": {
+          "uptime_pct": 99.997,
+          "downtime_min": 1,
+          "covered_min": 33510,
+          "elapsed_min": 44640,
+          "coverage_pct": 75.1,
+          "checks": 20593,
+          "down_checks": 1
+        },
+        "mcp": {
+          "uptime_pct": 100,
+          "downtime_min": 0,
+          "covered_min": 33510,
+          "elapsed_min": 44640,
+          "coverage_pct": 75.1,
+          "checks": 20593,
+          "down_checks": 0
+        },
+        "auth": {
+          "uptime_pct": 99.996,
+          "downtime_min": 1.4,
+          "covered_min": 33510,
+          "elapsed_min": 44640,
+          "coverage_pct": 75.1,
+          "checks": 20593,
+          "down_checks": 1
+        },
+        "docs": {
+          "uptime_pct": 100,
+          "downtime_min": 0,
+          "covered_min": 33510,
+          "elapsed_min": 44640,
+          "coverage_pct": 75.1,
+          "checks": 20593,
+          "down_checks": 0
+        },
+        "web": {
+          "uptime_pct": 100,
+          "downtime_min": 0,
+          "covered_min": 33510,
+          "elapsed_min": 44640,
+          "coverage_pct": 75.1,
+          "checks": 20593,
+          "down_checks": 0
+        }
+      }
+    },
+    "2026-11": {
+      "final": false,
+      "services": {
+        "app": {
+          "uptime_pct": 100,
+          "downtime_min": 0,
+          "covered_min": 9360.5,
+          "elapsed_min": 9461.6,
+          "coverage_pct": 98.9,
+          "checks": 8529,
+          "down_checks": 0
+        },
+        "api": {
+          "uptime_pct": 100,
+          "downtime_min": 0,
+          "covered_min": 9360.5,
+          "elapsed_min": 9461.6,
+          "coverage_pct": 98.9,
+          "checks": 8529,
+          "down_checks": 0
+        },
+        "mcp": {
+          "uptime_pct": 100,
+          "downtime_min": 0,
+          "covered_min": 9360.5,
+          "elapsed_min": 9461.6,
+          "coverage_pct": 98.9,
+          "checks": 8529,
+          "down_checks": 0
+        },
+        "auth": {
+          "uptime_pct": 99.931,
+          "downtime_min": 6.5,
+          "covered_min": 9360.5,
+          "elapsed_min": 9461.6,
+          "coverage_pct": 98.9,
+          "checks": 8529,
+          "down_checks": 5
+        },
+        "docs": {
+          "uptime_pct": 100,
+          "downtime_min": 0,
+          "covered_min": 9360.5,
+          "elapsed_min": 9461.6,
+          "coverage_pct": 98.9,
+          "checks": 8529,
+          "down_checks": 0
+        },
+        "web": {
+          "uptime_pct": 100,
+          "downtime_min": 0,
+          "covered_min": 9360.5,
+          "elapsed_min": 9461.6,
+          "coverage_pct": 98.9,
+          "checks": 8529,
+          "down_checks": 0
+        }
+      }
+    }
+  },
+  "target_pct": 99,
+  "updated_at": "2026-11-07T13:41:37.011Z"
+}
