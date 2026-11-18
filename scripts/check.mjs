@@ -147,7 +147,9 @@ const recentChecks = [];
 for (const key of [prevMonth, month]) {
   const checks = await readChecks(path.join(checksDir, `${key}.ndjson`));
   if (!checks.length) continue;
-  recentChecks.push(...checks);
+  // Not push(...checks): a spread passes every check as an argument, and a month of them
+  // overflowed the stack on 2026-11-16, stopping every run after it.
+  for (const check of checks) recentChecks.push(check);
   sla.months[key] = { final: key !== month, services: computeMonth(checks, key, inScope, opts) };
 }
 sla.target_pct = config.target_pct ?? null;
